@@ -1,14 +1,14 @@
 from pygame import *
 from random import randint, choice
 
-# ---------------- INIT ----------------
 init()
 mixer.init()
 
-# ---------------- MUSIC ----------------
 mixer.music.load("background_music.ogg")
 mixer.music.set_volume(0.6)
 mixer.music.play(-1)
+
+hit_sound = mixer.Sound("hit_impact.ogg")
 
 WIDTH, HEIGHT = 1000, 600
 FPS = 60
@@ -18,13 +18,11 @@ display.set_caption("Ping Pong")
 
 clock = time.Clock()
 
-# ---------------- COLORS ----------------
 WHITE = (255, 255, 255)
 CYAN = (0, 255, 255)
 BLUE = (20, 30, 70)
 DARK = (8, 12, 30)
 
-# ---------------- PARTICLES ----------------
 class Particle:
     def __init__(self, x, y):
         self.x = x
@@ -48,7 +46,6 @@ class Particle:
         if self.life > 0:
             draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
 
-# ---------------- STARS ----------------
 class Star:
     def __init__(self):
         self.x = randint(0, WIDTH)
@@ -73,7 +70,6 @@ def spawn_explosion(x, y):
     for _ in range(20):
         particles.append(Particle(x, y))
 
-# ---------------- SPRITES ----------------
 class GameSprite(sprite.Sprite):
     def __init__(self, color, x, y, w, h, speed):
         super().__init__()
@@ -85,7 +81,6 @@ class GameSprite(sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
-# ---------------- PLAYER ----------------
 class Player(GameSprite):
     def __init__(self, x, y, controls):
         super().__init__(WHITE, x, y, 18, 120, 7)
@@ -100,7 +95,6 @@ class Player(GameSprite):
             self.rect.y += self.speed
         self.rect.y = max(0, min(HEIGHT - self.rect.height, self.rect.y))
 
-# ---------------- BOT ----------------
 class Bot(GameSprite):
     def __init__(self, x, y, difficulty):
         super().__init__(WHITE, x, y, 18, 120, 5)
@@ -123,7 +117,6 @@ class Bot(GameSprite):
 
         self.rect.y = max(0, min(HEIGHT - self.rect.height, self.rect.y))
 
-# ---------------- BALL ----------------
 class Ball(GameSprite):
     def __init__(self):
         super().__init__(CYAN, WIDTH // 2, HEIGHT // 2, 20, 20, 5)
@@ -145,6 +138,8 @@ class Ball(GameSprite):
     def collide(self, paddle):
         if self.rect.colliderect(paddle.rect):
             spawn_explosion(self.rect.centerx, self.rect.centery)
+            hit_sound.play()
+
             self.speed_x *= -1
 
             if self.speed_x > 0:
@@ -152,7 +147,6 @@ class Ball(GameSprite):
             else:
                 self.speed_x -= 0.5
 
-# ---------------- MUSIC FIX ----------------
 def update_music_volume():
     if state == "menu":
         mixer.music.set_volume(0.6)
@@ -161,11 +155,9 @@ def update_music_volume():
     else:
         mixer.music.set_volume(0.7)
 
-# ---------------- FONTS ----------------
 font_big = font.SysFont("Arial", 60)
 font_small = font.SysFont("Arial", 28)
 
-# ---------------- SETTINGS ----------------
 settings = {
     "easy": {"limit": 12, "bot": True},
     "normal": {"limit": 12, "bot": True},
@@ -174,7 +166,6 @@ settings = {
     "2 players": {"limit": 12, "bot": False}
 }
 
-# ---------------- GAME STATE ----------------
 state = "menu"
 difficulty = "easy"
 
@@ -186,7 +177,6 @@ score1 = 0
 score2 = 0
 paused = False
 
-# ---------------- START GAME ----------------
 def start_game(mode):
     global player1, player2, ball, score1, score2
 
@@ -204,7 +194,6 @@ def start_game(mode):
     score1 = 0
     score2 = 0
 
-# ---------------- MENU BG ----------------
 def draw_menu_background():
     window.fill(DARK)
 
@@ -222,14 +211,11 @@ def draw_menu_background():
         else:
             p.draw(window)
 
-# ---------------- MAIN LOOP ----------------
 running = True
 
 while running:
 
     mouse_pos = mouse.get_pos()
-
-    # 🔊 MUSIC UPDATE (added)
     update_music_volume()
 
     for e in event.get():
@@ -251,7 +237,6 @@ while running:
                     start_game(difficulty)
                     state = "game"
 
-    # ---------------- MENU ----------------
     if state == "menu":
 
         draw_menu_background()
@@ -288,7 +273,6 @@ while running:
         clock.tick(FPS)
         continue
 
-    # ---------------- GAME ----------------
     if state == "game":
 
         window.fill(BLUE)
@@ -352,7 +336,6 @@ while running:
         display.update()
         clock.tick(FPS)
 
-    # ---------------- WIN ----------------
     if state == "win":
         window.fill(DARK)
         window.blit(font_big.render("PLAYER 1 WINS!", True, (100, 255, 120)), (250, 180))
@@ -361,7 +344,6 @@ while running:
         display.update()
         clock.tick(FPS)
 
-    # ---------------- LOSE ----------------
     if state == "lose":
         window.fill(DARK)
         window.blit(font_big.render("PLAYER 2 WINS!", True, (255, 120, 120)), (250, 180))
